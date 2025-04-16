@@ -1,0 +1,49 @@
+#include <Adafruit_TCA8418.h>
+
+Adafruit_TCA8418 keypad;
+
+// 4x4 Key Mapping: Row (8-11) × Column (4-7)
+char keymap[4][4] = {
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
+};
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) delay(10);
+
+  if (!keypad.begin()) {
+    Serial.println("TCA8418 not found, check wiring!");
+    while (1);
+  }
+
+  // Set keypad matrix size: rows 8-11, columns 4-7
+  keypad.matrix(8, 10);
+  keypad.flush();
+
+  Serial.println("TCA8418 Ready!");
+}
+
+void loop() {
+  if (keypad.available() > 0) {
+    int key = keypad.getEvent();
+    if (key & 0x80) {  // Press event
+      key &= 0x7F;     // remove high bit
+      key--;           // keys are 1-based
+
+      int row = key / 10;
+      int col = key % 10;
+
+      // bounds check to avoid out-of-range crash
+      if (row >= 0 && row < 4 && col >= 0 && col < 4) {
+        char keyChar = keymap[row][col];
+        Serial.print("Key Pressed: ");
+        Serial.println(keyChar);
+      } else {
+        Serial.println("Unknown key");
+      }
+    }
+  }
+}
